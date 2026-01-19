@@ -20,12 +20,61 @@ export const CoalProvider = ({ children }) => {
     setLoading(false);
   };
 
+  // Add a new log
+  const addLog = async (newLog) => {
+    const { data, error } = await supabase
+      .from("emission_logs")
+      .insert([newLog])
+      .select();
+
+    if (error) {
+      console.error("Error adding log:", error);
+      return { error };
+    }
+
+    // Optimistically update state or append new data
+    if (data) setLogs((prev) => [data[0], ...prev]);
+    return { data };
+  };
+
+  // Update an existing log
+  const updateLog = async (id, updatedFields) => {
+    const { data, error } = await supabase
+      .from("emission_logs")
+      .update(updatedFields)
+      .eq("id", id)
+      .select();
+
+    if (error) {
+      console.error("Error updating log:", error);
+      return { error };
+    }
+
+    if (data) {
+      setLogs((prev) => prev.map((log) => (log.id === id ? data[0] : log)));
+    }
+    return { data };
+  };
+
+  // Delete a log
+  const deleteLog = async (id) => {
+    const { error } = await supabase.from("emission_logs").delete().eq("id", id);
+
+    if (error) {
+      console.error("Error deleting log:", error);
+      return { error };
+    }
+
+    setLogs((prev) => prev.filter((log) => log.id !== id));
+    return { error: null };
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
 
   return (
-    <CoalContext.Provider value={{ logs, setLogs, fetchData, loading }}>
+    <CoalContext.Provider value={{ logs, loading, fetchData, addLog, updateLog, deleteLog }}>
       {children}
     </CoalContext.Provider>
   );
