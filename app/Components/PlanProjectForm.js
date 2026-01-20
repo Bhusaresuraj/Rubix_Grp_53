@@ -51,23 +51,51 @@ export default function PlanProjectForm({ mineId }) {
   const { fetchData } = useCoal();
   const [plan, setPlan] = useState({ year: 2030, offset: 0, species: 'Teak' });
   const supabase = createClient();
+   const [target, setTarget] = useState({ year: 2030, offset: 0 });
+  // const handlePlan = async (e) => {
+  //   e.preventDefault();
+  //   const { error } = await supabase.from('afforestation_plans').insert([{
+  //     location_id: mineId,
+  //     target_year: plan.year,
+  //     estimated_offset: plan.offset,
+  //     primary_plant_species: plan.species,
+  //     recommended: true
+  //   }]);
+
 
   const handlePlan = async (e) => {
     e.preventDefault();
     const { error } = await supabase.from('afforestation_plans').insert([{
       location_id: mineId,
-      target_year: plan.year,
-      estimated_offset: plan.offset,
-      primary_plant_species: plan.species,
+      target_year: target.year,
+      estimated_offset: target.offset,
+   
       recommended: true
     }]);
 
+    
+  
     if (!error) {
       alert("Plan Securely Logged!");
       fetchData(); // Refresh the graph and ledger immediately
     }
   };
 
+
+  //   const [target, setTarget] = useState({ year: 2030, offset: 0 });
+//   const supabase = createClient();
+
+//   const handlePlan = async (e) => {
+//     e.preventDefault();
+//     const { error } = await supabase.from('afforestation_plans').insert([{
+//       location_id: mineId,
+//       target_year: target.year,
+//       estimated_offset: target.offset,
+//       recommended: true
+//     }]);
+
+//     if (!error) alert("New Neutrality Plan Saved!");
+//   };
   return (
     <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-100/50">
       <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">

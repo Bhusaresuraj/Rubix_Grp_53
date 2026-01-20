@@ -1,66 +1,79 @@
 "use client";
-import React, { useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import React from 'react';
 import { useCoal } from '../context/CoalContext';
-export default function EmissionForm({ mineId }) {
-  const [data, setData] = useState({ diesel: 0, electricity: 0, explosives: 0 });
-  const { fetchData } = useCoal();
-  const supabase = createClient();
+import OperationsLogger from './OperationsLogger';
+import ImpactCategoryPie from './ImpactCategoryPie';
+import TemporalHeatmap from "./TemporalHeatmap";
+import EmissionTrend from './EmissionTrend';
+import { Activity, ShieldAlert, Zap, Fuel } from 'lucide-react';
 
-  // Real-time calculation for the "Live Preview"
-  const livePreview = ((data.diesel * 2.68) + (data.electricity * 0.82) + (data.explosives * 0.18)) / 1000;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const { error } = await supabase.from('emission_logs').insert([{
-      mine_id: mineId,
-      diesel_liters: data.diesel,
-      electricity_kwh: data.electricity,
-      explosives_kg: data.explosives,
-      recorded_at: new Date().toISOString().split('T')[0]
-    }]);
-
-    if (!error) {
-      alert("Data Logged Successfully!");
-      fetchData(); // Refresh global context
-    } else {
-      console.error(error);
-    }
-  };
+export default function EmissionForm() {
+  const { logs, loading } = useCoal();
 
   return (
-    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-      <h2 className="text-xl font-bold text-green-400 mb-6">Log Operational Data</h2>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {/* HEADER SECTION */}
+      <div className="flex justify-between items-end bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm">
         <div>
-          <label className="text-slate-400 text-sm">Diesel Consumption (Liters)</label>
-          <input type="number" step="any" className="w-full bg-slate-900 border border-slate-700 p-3 rounded-lg mt-1" 
-            onChange={(e) => setData({...data, diesel: Number(e.target.value)})} />
+          <h2 className="text-4xl font-black text-slate-900 tracking-tight">Operational Audit</h2>
+          <p className="text-slate-500 font-medium mt-2 flex items-center gap-2">
+            <ShieldAlert size={16} className="text-red-500" /> Monitoring Scope 1 & Scope 2 carbon intensity in real-time.
+          </p>
         </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-slate-400 text-sm">Electricity (kWh)</label>
-            <input type="number" step="any" className="w-full bg-slate-900 border border-slate-700 p-3 rounded-lg mt-1" 
-              onChange={(e) => setData({...data, electricity: Number(e.target.value)})} />
-          </div>
-          <div>
-            <label className="text-slate-400 text-sm">Explosives (kg)</label>
-            <input type="number" step="any" className="w-full bg-slate-900 border border-slate-700 p-3 rounded-lg mt-1" 
-              onChange={(e) => setData({...data, explosives: Number(e.target.value)})} />
+        <div className="text-right">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compliance Cycle</p>
+          <p className="text-lg font-bold text-slate-800">Q1 2026 Audit Active</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* LEFT: FORM & PIE CHART */}
+        <div className="lg:col-span-5 space-y-10">
+          <OperationsLogger />
+          
+          <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <Zap size={18} className="text-amber-500" /> Impact Category Breakdown
+            </h3>
+            <ImpactCategoryPie logs={logs} />
+            <div className="mt-6 grid grid-cols-2 gap-4">
+               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Diesel Impact</p>
+                  <p className="text-sm font-black text-slate-800">Scope 1 Direct</p>
+               </div>
+               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Grid Impact</p>
+                  <p className="text-sm font-black text-slate-800">Scope 2 Indirect</p>
+               </div>
+            </div>
           </div>
         </div>
 
-        <div className="bg-slate-900/50 p-4 rounded-xl border border-dashed border-slate-600 mt-6">
-          <p className="text-xs text-slate-500 uppercase font-bold">Live Footprint Preview</p>
-          <p className="text-3xl font-black text-white">{livePreview.toFixed(3)} <span className="text-sm font-normal">tons CO2-e</span></p>
+        {/* RIGHT: HEATMAP (Database Visualization) */}
+        <div className="lg:col-span-7">
+           <div className="bg-slate-900 p-10 rounded-[3rem] h-full shadow-2xl relative overflow-hidden">
+              <div className="relative z-10 h-full flex flex-col">
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Activity className="text-red-500" /> Temporal Carbon Intensity
+                  </h3>
+                  <p className="text-slate-400 text-sm mt-1">Operational peaks identified via database timestamp analysis.</p>
+                </div>
+                
+                <div className="flex-1 min-h-[400px]">
+                   <TemporalHeatmap logs={logs} />
+                </div>
+                
+                <p className="text-[10px] text-slate-500 font-medium italic mt-6">
+                  * Darker segments indicate high-intensity operational windows.
+                </p>
+              </div>
+              <div className="absolute bottom-[-100px] right-[-100px] w-80 h-80 bg-red-600 rounded-full blur-[150px] opacity-20"></div>
+           </div>
         </div>
-
-        <button type="submit" className="w-full bg-green-500 hover:bg-green-400 text-slate-900 font-bold py-3 rounded-xl transition-all mt-4">
-          Finalize & Save Log
-        </button>
-      </form>
+      </div>
+          <EmissionTrend logs={logs} />
     </div>
   );
 }

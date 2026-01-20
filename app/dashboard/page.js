@@ -5,6 +5,7 @@ import GapChart from "../Components/GapChart";
 import TrendChart from "../Components/TrendChart";
 import AfforestationEstimator from "../Components/AfforestationEstimator";
 import EmissionForm from "../Components/EmissionForm";
+import MitigationSimulator from "../Components/MitigationSimulator";
 import AfforestationRegistry from "../Components/AfforestationRegistry";
 import { 
   LayoutDashboard, Factory, Leaf, 
@@ -51,12 +52,12 @@ const { logs, sinks, plans, loading } = useCoal();
             <LayoutDashboard size={20} /> Dashboard
           </button>
           
-          <button 
-            onClick={() => setActiveTab('emissions')} 
-            className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'emissions' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
-          >
-            <Factory size={20} /> Emission Logs
-          </button>
+         <button 
+  onClick={() => setActiveTab('audit')} 
+  className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'audit' ? 'bg-red-50 text-red-700 font-bold border border-red-100' : 'text-slate-500 hover:bg-slate-50'}`}
+>
+  <Factory size={20} /> Emission Audit
+</button>
           
           <button 
             onClick={() => setActiveTab('sinks')} 
@@ -64,6 +65,12 @@ const { logs, sinks, plans, loading } = useCoal();
           >
             <Leaf size={20} /> Afforestation
           </button>
+          <button 
+  onClick={() => setActiveTab('simulator')} 
+  className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'simulator' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
+>
+  <Zap size={20} /> Mitigation Lab
+</button>
         </nav>
       </aside>
 
@@ -71,6 +78,24 @@ const { logs, sinks, plans, loading } = useCoal();
       <main className="flex-1 overflow-y-auto p-10">
         {/* {activeTab === 'dashboard' && <EnhancedOverview gap={gap} neutrality={neutralityPercent} totalS={totalS} logs={logs} sinks={sinks} />}
         {activeTab === 'emissions' && <EmissionLoggerModule mineId={selectedMineId} logs={logs} />} */}
+        {activeTab === 'audit' && (
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-3xl font-black text-slate-800">Operational Audit</h2>
+          <p className="text-slate-500 font-medium">Monitoring Scope 1 & Scope 2 carbon intensity.</p>
+        </div>
+      </div>
+      
+      {/* The Logger Form we just built */}
+      <EmissionForm mineId={selectedMineId} />
+      
+      {/* Coming next: The Temporal Heatmap */}
+      <div className="bg-white p-10 rounded-[2.5rem] border border-slate-100 min-h-[400px] flex items-center justify-center">
+         <p className="text-slate-300 font-bold italic tracking-widest">Temporal Heatmap Engine Loading...</p>
+      </div>
+    </div>
+  )}
       {activeTab === 'sinks' && (
     <AfforestationRegistry 
       mineId={selectedMineId} 
@@ -78,6 +103,8 @@ const { logs, sinks, plans, loading } = useCoal();
       plans={safePlans}
     />
   )}
+
+  {activeTab === 'simulator' && <MitigationSimulator logs={logs} sinks={sinks} />}
       </main>
 </div>
       {/* MAIN CONTENT AREA */}
