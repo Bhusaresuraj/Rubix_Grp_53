@@ -1,6 +1,8 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -16,37 +18,39 @@ export default function GovSidebar() {
   const router = useRouter();
 
   const menu = [
-    {
-      label: "National Overview",
-      icon: LayoutDashboard,
-      path: "/gov_dashboard",
-    },
-    {
-      label: "Organization Analysis",
-      icon: Building2,
-      path: "/gov_dashboard?view=org",
-    },
-    {
-      label: "Plantation History",
-      icon: Trees,
-      path: "/gov_dashboard?view=plantation",
-    },
-    {
-      label: "Emission Trends",
-      icon: TrendingUp,
-      path: "/gov_dashboard?view=emissions",
-    },
-    {
-      label: "Compliance Status",
-      icon: AlertTriangle,
-      path: "/gov_dashboard?view=compliance",
-    },
-    {
-      label: "Geographical View",
-      icon: MapPinned,
-      path: "/gov_dashboard?view=map",
-    },
-  ];
+  {
+    label: "National Overview",
+    icon: LayoutDashboard,
+    path: "/gov-dashboard",
+  },
+  
+  {
+    label: "Organization Analysis",
+    icon: Building2,
+    path: "/gov-dashboard?view=OrganizationAnalysis",
+  },
+  {
+    label: "Plantation History",
+    icon: Trees,
+    path: "/gov-dashboard?view=plantation",
+  },
+  {
+    label: "Emission Trends",
+    icon: TrendingUp,
+    path: "/gov-dashboard?view=emissions",
+  },
+  {
+    label: "Compliance Status",
+    icon: AlertTriangle,
+    path: "/gov-dashboard?view=compliance",
+  },
+  {
+    label: "Geographical View",
+    icon: MapPinned,
+    path: "/gov-dashboard?view=map",
+  },
+];
+
 
   return (
     <aside className="w-[280px] min-h-screen bg-slate-800 text-white flex flex-col px-6 py-8">

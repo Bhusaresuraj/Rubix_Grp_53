@@ -20,6 +20,34 @@ ChartJS.register(
   Legend
 );
 
+/* ================= MOCK DATA (FALLBACK) ================= */
+const MOCK_DATA = [
+  {
+    year: 2021,
+    yearly_emission: 1200,
+    estimated_offset: 300,
+    status: "Inadequate",
+  },
+  {
+    year: 2022,
+    yearly_emission: 950,
+    estimated_offset: 600,
+    status: "Inadequate",
+  },
+  {
+    year: 2023,
+    yearly_emission: 700,
+    estimated_offset: 850,
+    status: "Adequate",
+  },
+  {
+    year: 2024,
+    yearly_emission: 500,
+    estimated_offset: 900,
+    status: "Adequate",
+  },
+];
+
 export default function OrganizationAnalysis() {
   const supabase = createClient();
 
@@ -27,6 +55,7 @@ export default function OrganizationAnalysis() {
   const [selectedOrg, setSelectedOrg] = useState("");
   const [selectedYear, setSelectedYear] = useState("ALL");
   const [rows, setRows] = useState([]);
+  const [usingMock, setUsingMock] = useState(false);
 
   /* ---------------- FETCH ORG LIST ---------------- */
   useEffect(() => {
@@ -41,65 +70,84 @@ export default function OrganizationAnalysis() {
     loadOrgs();
   }, []);
 
-  /* ---------------- FETCH ANALYSIS DATA ---------------- */
+  /* ---------------- FETCH DATA OR FALLBACK ---------------- */
   useEffect(() => {
     if (!selectedOrg) return;
 
     async function loadData() {
-      let query = supabase
-        .from("government_plantation_history_view")
-        .select("*")
-        .eq("organization_name", selectedOrg)
-        .order("year", { ascending: true });
+      try {
+        let query = supabase
+          .from("government_plantation_history_view")
+          .select("*")
+          .eq("organization_name", selectedOrg)
+          .order("year", { ascending: true });
 
-      if (selectedYear !== "ALL") {
-        query = query.eq("year", selectedYear);
+        if (selectedYear !== "ALL") {
+          query = query.eq("year", selectedYear);
+        }
+
+        const { data, error } = await query;
+
+        if (error || !data || data.length === 0) {
+          setUsingMock(true);
+          setRows(
+            selectedYear === "ALL"
+              ? MOCK_DATA
+              : MOCK_DATA.filter((r) => r.year === Number(selectedYear))
+          );
+        } else {
+          setUsingMock(false);
+          setRows(data);
+        }
+      } catch {
+        setUsingMock(true);
+        setRows(MOCK_DATA);
       }
-
-      const { data } = await query;
-      setRows(data || []);
     }
 
     loadData();
   }, [selectedOrg, selectedYear]);
 
-  /* ---------------- KPI CALCULATIONS ---------------- */
+  /* ---------------- METRICS ---------------- */
   const totalEmission = rows.reduce(
-    (sum, r) => sum + (r.yearly_emission || 0),
+    (sum, r) => sum + r.yearly_emission,
     0
   );
 
   const totalOffset = rows.reduce(
-    (sum, r) => sum + (r.estimated_offset || 0),
+    (sum, r) => sum + r.estimated_offset,
     0
   );
 
-  const netGap = totalEmission - totalOffset;
+  const complianceRatio =
+    totalEmission === 0
+      ? 100
+      : Math.min((totalOffset / totalEmission) * 100, 100);
 
-  /* ---------------- BAR CHART ---------------- */
+  /* ---------------- CHART ---------------- */
   const chartData = {
     labels: rows.map((r) => r.year),
     datasets: [
       {
-        label: "Emissions (kg CO₂)",
+        label: "Emissions",
         data: rows.map((r) => r.yearly_emission),
-        backgroundColor: "#ef4444",
+        backgroundColor: "#dc2626",
       },
       {
-        label: "Offsets (kg CO₂)",
+        label: "Offsets",
         data: rows.map((r) => r.estimated_offset),
-        backgroundColor: "#22c55e",
+        backgroundColor: "#16a34a",
       },
     ],
   };
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-10">
 
-      {/* -------- CONTROLS -------- */}
+      {/* ===== FILTERS ===== */}
       <div className="flex gap-4">
         <select
-          className="border rounded-lg px-4 py-2"
+          className="bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-800"
           value={selectedOrg}
           onChange={(e) => setSelectedOrg(e.target.value)}
         >
@@ -112,98 +160,81 @@ export default function OrganizationAnalysis() {
         </select>
 
         <select
-          className="border rounded-lg px-4 py-2"
+          className="bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-800"
           value={selectedYear}
           onChange={(e) => setSelectedYear(e.target.value)}
         >
           <option value="ALL">All Years</option>
-          {[2021, 2022, 2023, 2024, 2025].map((y) => (
+          {[2021, 2022, 2023, 2024].map((y) => (
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
       </div>
 
-      {/* -------- KPI CARDS -------- */}
-      {selectedOrg && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <KPI title="Total Emissions" value={totalEmission.toFixed(2)} />
-          <KPI title="Total Offset" value={totalOffset.toFixed(2)} />
-          <KPI title="Net Gap" value={netGap.toFixed(2)} />
-          <KPI
-            title="Status"
-            value={netGap <= 0 ? "Compliant" : "Non-Compliant"}
-            status
-          />
+      {/* ===== NOTICE ===== */}
+      {usingMock && (
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded-xl text-sm font-semibold">
+          Showing simulated data (regulatory view integration pending)
         </div>
       )}
 
-      {/* -------- BAR CHART -------- */}
+      {/* ===== VISUAL KPIs ===== */}
+      {selectedOrg && (
+        <div className="bg-white rounded-3xl shadow p-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <MetricBar title="Total Emissions" value={totalEmission} color="bg-red-500" />
+          <MetricBar title="Total Offset" value={totalOffset} color="bg-green-500" />
+          <ComplianceRing percentage={complianceRatio} />
+        </div>
+      )}
+
+      {/* ===== BAR CHART ===== */}
       {rows.length > 0 && (
         <div className="bg-white p-6 rounded-2xl shadow">
-          <h3 className="font-bold mb-4">
-            Emission vs Offset Comparison
+          <h3 className="font-black text-slate-800 mb-4">
+            Emission vs Offset (Year-wise)
           </h3>
           <Bar data={chartData} />
         </div>
       )}
-
-      {/* -------- TABLE -------- */}
-      {rows.length > 0 && (
-        <div className="bg-white rounded-2xl shadow overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-slate-100 text-xs uppercase">
-              <tr>
-                <th className="p-4">Year</th>
-                <th className="p-4">Emission</th>
-                <th className="p-4">Offset</th>
-                <th className="p-4">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr key={i} className="border-t">
-                  <td className="p-4">{r.year}</td>
-                  <td className="p-4">{r.yearly_emission}</td>
-                  <td className="p-4">{r.estimated_offset}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        r.status === "Adequate"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {r.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
     </div>
   );
 }
 
-/* ---------------- KPI COMPONENT ---------------- */
+/* ================= VISUAL COMPONENTS ================= */
 
-function KPI({ title, value, status }) {
+function MetricBar({ title, value, color }) {
   return (
-    <div className="bg-white p-6 rounded-2xl shadow">
-      <p className="text-xs uppercase text-slate-400">{title}</p>
-      <h2
-        className={`text-2xl font-black ${
-          status
-            ? value === "Compliant"
-              ? "text-green-600"
-              : "text-red-600"
-            : ""
-        }`}
-      >
-        {value}
-      </h2>
+    <div>
+      <p className="text-sm font-bold text-slate-500 mb-2">{title}</p>
+      <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
+        <div className={`${color} h-full`} style={{ width: "100%" }} />
+      </div>
+      <p className="mt-2 text-slate-800 font-black">
+        {value.toLocaleString()} kg CO₂
+      </p>
+    </div>
+  );
+}
+
+function ComplianceRing({ percentage }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-32 h-32 rounded-full border-[10px] border-slate-200">
+        <div
+          className={`absolute inset-0 rounded-full border-[10px] ${
+            percentage >= 100 ? "border-green-500" : "border-yellow-500"
+          }`}
+          style={{ clipPath: `inset(${100 - percentage}% 0 0 0)` }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-2xl font-black text-slate-800">
+            {percentage.toFixed(0)}%
+          </span>
+        </div>
+      </div>
+      <p className="mt-3 text-sm font-bold text-slate-600">
+        Compliance Ratio
+      </p>
     </div>
   );
 }
