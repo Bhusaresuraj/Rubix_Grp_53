@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Pane, useMap, Circle } from "react-leaflet";
+import { useState, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Pane, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L, { LatLng } from "leaflet";
 import { useCoal } from "@/app/context/CoalContext"; // Import the context hook
-import AddLocationModal from "./AddLocationModal";
+import AddLocationModal from "@/app/Components/AddLocationModal";
+import EmissionLayer from "./MapLayers/EmissionLayer";
+import NetImpactLayer from "./MapLayers/NetImpactLayer";
+import WorkStatusLayer from "./MapLayers/WorkStatusLayer";
 
 // Fix for default marker icon missing in Leaflet with Next.js
 const icon = L.icon({
@@ -40,6 +43,12 @@ const getStatusIcon = (status) => {
 const MapUpdater = ({ position }) => {
   const map = useMap();
   useEffect(() => {
+    if (!position || position[0] == null || position[1] == null) return;
+
+    const currentCenter = map.getCenter();
+    const target = L.latLng(position[0], position[1]);
+    if (currentCenter.distanceTo(target) < 10) return;
+
     map.flyTo(position, 13, {
       animate: true,
       duration: 1.5,
@@ -51,14 +60,24 @@ const MapUpdater = ({ position }) => {
 // Component to automatically fit map bounds to markers
 const MapBoundsFitter = ({ locations }) => {
   const map = useMap();
+  const hasFittedRef = useRef(false);
+  
+  // Create a stable signature to prevent re-fitting when array reference changes but data is same
+  const locationsSignature = (locations || []).map(loc => `${loc.id}-${loc.latitude}-${loc.longitude}`).join('|');
+
   useEffect(() => {
-    if (locations && locations.length > 0) {
-      const bounds = L.latLngBounds(locations.map(loc => [loc.latitude, loc.longitude]));
+    // Only fit bounds if we haven't fitted yet AND we have valid locations
+    if (!hasFittedRef.current && locations && locations.length > 0) {
+      const validLocations = locations.filter(loc => loc.latitude != null && loc.longitude != null);
+      if (validLocations.length === 0) return;
+
+      const bounds = L.latLngBounds(validLocations.map(loc => [loc.latitude, loc.longitude]));
       if (bounds.isValid()) {
         map.fitBounds(bounds, { padding: [50, 50] });
+        hasFittedRef.current = true;
       }
     }
-  }, [locations, map]);
+  }, [locationsSignature, map]);
   return null;
 };
 
@@ -228,6 +247,60 @@ const MapLeaflet = () => {
 
   return (
     <div style={{ position: 'relative', height: "80vh", width: "100%", borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}>
+      <MapContainer center={mapCenter} zoom={7} style={{ height: "100%", width: "100%", background: '#1a1a1a' }}>
+        <MapUpdater position={mapCenter} />
+        
+        <MapBoundsFitter locations={mineLocations} />
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        />
+
+        {/* Handle clicks for adding location */}
+        <MapClickHandler isAdding={isAddingMode} onMapClick={(latlng) => { setNewLocationModal(latlng); }} />
+        
+        {!loading && (mineLocations || []).length === 0 && (
+           <div className="leaflet-bottom leaflet-right" style={{ pointerEvents: 'none', margin: '20px' }}>
+             <div style={{ background: 'white', padding: '5px 10px', borderRadius: '4px', pointerEvents: 'auto' }}>
+               No locations found
+             </div>
+           </div>
+        )}
+
+        {/* 1. Work Status Markers */}
+        {activeLayers.workStatus && (
+          <WorkStatusLayer 
+            locations={mineLocations || []}
+            plantationZonesActive={activeLayers.plantationZones}
+            onSelect={setSelectedLocation}
+          />
+        )}
+
+        {/* 2. Plantation Zones (Net Impact) */}
+        {/* Render in plantationPane */}
+        <Pane name="plantationPane" style={{ zIndex: 440 }}>
+           {activeLayers.plantationZones && (
+             <NetImpactLayer
+               locations={(mineLocations || []).filter(loc => ['stopped', 'completed'].includes(loc.work_status))}
+               SEQUESTRATION_RATE={SEQUESTRATION_RATE}
+               EMISSION_VALUES={EMISSION_VALUES}
+               getNetImpactColor={getNetImpactColor}
+               onSelect={setSelectedLocation}
+             />
+           )}
+        </Pane>
+
+        {/* 3. Emission Hotspots */}
+        {/* EmissionLayer wraps itself in emissionPane */}
+        {activeLayers.emissionHotspots && (
+          <EmissionLayer
+            locations={(mineLocations || []).filter(loc => !['stopped', 'completed'].includes(loc.work_status))}
+            getHotspotOptions={getHotspotOptions}
+            onSelect={setSelectedLocation}
+          />
+        )}
+      </MapContainer>
+
       {/* --- LAYER TOGGLES --- */}
       <div style={togglePanelStyle}>
         <button style={toggleButtonStyle(activeLayers.workStatus)} onClick={() => setActiveLayers(p => ({...p, workStatus: !p.workStatus}))}>Work Status</button>
@@ -247,93 +320,6 @@ const MapLeaflet = () => {
           onSave={handleSaveNewLocation}
         />
       )}
-
-      {/* --- MAP CONTAINER --- */}
-      <MapContainer center={mapCenter} zoom={7} style={{ height: "100%", width: "100%", background: '#1a1a1a' }}>
-        <MapUpdater position={mapCenter} />
-        {/* Define panes for layer stacking control */}
-        <Pane name="emissionPane" style={{ zIndex: 450 }} />
-        <Pane name="plantationPane" style={{ zIndex: 440 }} />
-
-        <MapBoundsFitter locations={mineLocations} />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
-
-        {/* Handle clicks for adding location */}
-        <MapClickHandler isAdding={isAddingMode} onMapClick={(latlng) => { setNewLocationModal(latlng); }} />
-        
-        {!loading && mineLocations.length === 0 && (
-           <div className="leaflet-bottom leaflet-right" style={{ pointerEvents: 'none', margin: '20px' }}>
-             <div style={{ background: 'white', padding: '5px 10px', borderRadius: '4px', pointerEvents: 'auto' }}>
-               No locations found
-             </div>
-           </div>
-        )}
-
-        {!loading && mineLocations.map(loc => {
-          const lat = parseFloat(loc.latitude);
-          const lng = parseFloat(loc.longitude);
-
-          // --- CALCULATIONS ---
-          const isPlantationCandidate = ['stopped', 'completed'].includes(loc.work_status);
-          const emissions = isPlantationCandidate ? 0 : (EMISSION_VALUES[loc.emission_intensity] || 0);
-          const sequestration = loc.land_area * SEQUESTRATION_RATE;
-          const netImpact = emissions - sequestration;
-          const netImpactColor = getNetImpactColor(netImpact);
-
-          // Skip invalid coordinates
-          if (isNaN(lat) || isNaN(lng)) return null;
-
-          return (
-          <div key={loc.id}>
-            {/* 1. Work Status Markers */}
-            {activeLayers.workStatus && !isPlantationCandidate && (
-              <Marker 
-                position={[lat, lng]} 
-                icon={getStatusIcon(loc.work_status)}
-                eventHandlers={{ click: () => {
-                  setSelectedLocation(loc);
-                  // setMapCenter([lat, lng]); 
-                }}}
-              >
-                <Popup>
-                  <strong>{loc.name}</strong><br/>
-                  Status: {loc.work_status}<br/>
-                  Lat: {lat}, Lng: {lng}
-                </Popup>
-              </Marker>
-            )}
-
-            {/* 2. Net Impact & Afforestation Zone Layer */}
-            {activeLayers.plantationZones && isPlantationCandidate && (
-              <Circle 
-                center={[lat, lng]} 
-                pane="plantationPane"
-                pathOptions={{ color: netImpactColor, fillColor: netImpactColor, fillOpacity: 0.5 }} 
-                radius={Math.sqrt(loc.land_area * 10000 / Math.PI) * 2}
-                eventHandlers={{ click: () => setSelectedLocation(loc) }}
-              >
-                <Popup>
-                  <strong>Net Impact Analysis</strong><br/>
-                  Emissions: {emissions.toFixed(2)} tCO₂/year<br/>
-                  Sequestration: {sequestration.toFixed(2)} tCO₂/year<br/>
-                  <strong>Net: {netImpact.toFixed(2)} tCO₂/year</strong>
-                </Popup>
-              </Circle>
-            )}
-
-            {/* 3. Emission Hotspot Layer */}
-            {activeLayers.emissionHotspots && !isPlantationCandidate && (
-              <Circle center={[lat, lng]} pane="emissionPane" {...getHotspotOptions(loc.emission_intensity)}>
-                <Popup>Emission Intensity: {loc.emission_intensity}</Popup>
-              </Circle>
-            )}
-          </div>
-          );
-        })}
-      </MapContainer>
     </div>
   );
 };
