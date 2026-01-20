@@ -8,17 +8,26 @@ export const CoalProvider = ({ children }) => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
-
+const [sinks, setSinks] = useState()
   // Fetch data once when the app loads
-  const fetchData = async () => {
-    const { data, error } = await supabase
-      .from("emission_logs")
-      .select("*")
-      .order("recorded_at", { ascending: false });
+  // const fetchData = async () => {
+  //   const { data, error } = await supabase
+  //     .from("emission_logs")
+  //     .select("*")
+  //     .order("recorded_at", { ascending: false });
     
-    if (!error) setLogs(data);
-    setLoading(false);
-  };
+  //   if (!error) setLogs(data);
+  //   setLoading(false);
+  // };
+
+  const fetchData = async () => {
+  const { data: emissionData } = await supabase.from("emission_logs").select("*");
+  const { data: sinkData } = await supabase.from("sinks").select("*");
+  
+  setLogs(emissionData || []);
+  setSinks(sinkData || []); // Add a [sinks, setSinks] state to your context
+  setLoading(false);
+};
 
   // Add a new log
   const addLog = async (newLog) => {
