@@ -1,223 +1,209 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useCoal } from "../context/CoalContext";
-import EmissionForm from "../Components/EmissionForm";
-import SinkForm from "../Components/SinkForm";
 import GapChart from "../Components/GapChart";
 import TrendChart from "../Components/TrendChart";
-import { createClient } from "@/utils/supabase/client";
-import { Factory, Leaf, LayoutDashboard, AlertCircle, Zap, ShieldCheck } from 'lucide-react';
-import MitigationSimulator from "../Components/MitigationSimulator";
 import AfforestationEstimator from "../Components/AfforestationEstimator";
+import EmissionForm from "../Components/EmissionForm";
+import AfforestationRegistry from "../Components/AfforestationRegistry";
+import { 
+  LayoutDashboard, Factory, Leaf, 
+  ArrowUpRight, Target, ShieldCheck, 
+  Search, Bell, User,Zap 
+} from 'lucide-react';
+
 const page = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [mines, setMines] = useState([]);
-  const [selectedMineId, setSelectedMineId] = useState(null);
-  const supabase = createClient();
-
-  // 1. Get data from Context
   const { logs, sinks, loading } = useCoal();
-
   
-  // 2. Calculations
-  const totalDiesel = (logs || []).reduce((acc, curr) => acc + (curr.diesel_liters || 0), 0);
-  const totalElec = (logs || []).reduce((acc, curr) => acc + (curr.electricity_kwh || 0), 0);
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'emissions', 'sinks'
+  const [selectedMineId, setSelectedMineId] = useState(null);
+  // Safe math for professional display
+  const safeLogs = logs || [];
+  const safeSinks = sinks || [];
   
-  // Total Emissions in Tons
-  const totalE = (logs || []).reduce((acc, curr) => acc + ((curr.diesel_liters * 2.68 + curr.electricity_kwh * 0.82 + (curr.explosives_kg || 0) * 0.18) / 1000), 0);
-  // Total Sinks in Tons
-  const totalS = (sinks || []).reduce((acc, curr) => acc + ((curr.neem_count * 25 + curr.bamboo_count * 18.2 + (curr.teak_count || 0) * 20.5) / 1000), 0);
-  
+  const totalE = safeLogs.reduce((acc, curr) => acc + ((curr.diesel_liters * 2.68 + curr.electricity_kwh * 0.82) / 1000), 0);
+  const totalS = safeSinks.reduce((acc, curr) => acc + ((curr.neem_count * 25 + curr.bamboo_count * 18.2) / 1000), 0);
   const gap = (totalE - totalS).toFixed(2);
-  const totalCO2Display = totalE.toFixed(2);
+  
+  // Neutrality Percentage (e.g., how much of our emissions are covered by sinks?)
+  const neutralityPercent = totalE > 0 ? Math.min(100, (totalS / totalE) * 100).toFixed(1) : 0;
 
-  // Fetch Mines for Selection
-  useEffect(() => {
-    async function getMines() {
-      const { data } = await supabase.from('mines').select('id, name');
-      if (data) {
-        setMines(data);
-        if (data.length > 0) setSelectedMineId(data[0].id);
-      }
-    }
-    getMines();
-  }, [supabase]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-green-400 animate-pulse font-mono flex items-center gap-3">
-          <Zap className="animate-bounce" /> INITIALIZING COAL-CHAIN PROTOCOL...
-        </div>
+  if (loading) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-500 rounded-full animate-spin"></div>
+        <p className="text-slate-400 font-medium animate-pulse">Syncing Environmental Data...</p>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
-    <div className="flex h-screen bg-slate-900 text-white overflow-hidden">
-      {/* SIDEBAR */}
-      <nav className="w-72 bg-slate-800 border-r border-slate-700 p-6 flex flex-col gap-2">
-        <div className="flex items-center gap-2 mb-10 px-2">
-          <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-            <ShieldCheck className="text-slate-900" size={20} />
-          </div>
-          <span className="text-2xl font-black text-white tracking-tighter">Coal<span className="text-green-500">Carbon</span></span>
-        </div>
-
-        <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest px-2 mb-2">Navigation</p>
-        <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-3 p-3 rounded-xl transition ${activeTab === 'dashboard' ? 'bg-green-500/10 text-green-400 shadow-inner' : 'text-slate-400 hover:bg-slate-700'}`}>
-          <LayoutDashboard size={18} /> Overview
-        </button>
-        <button onClick={() => setActiveTab('emissions')} className={`flex items-center gap-3 p-3 rounded-xl transition ${activeTab === 'emissions' ? 'bg-red-500/10 text-red-400' : 'text-slate-400 hover:bg-slate-700'}`}>
-          <Factory size={18} /> Emission Logger
-        </button>
-        <button onClick={() => setActiveTab('sinks')} className={`flex items-center gap-3 p-3 rounded-xl transition ${activeTab === 'sinks' ? 'bg-emerald-500/10 text-emerald-400' : 'text-slate-400 hover:bg-slate-700'}`}>
-          <Leaf size={18} /> Afforestation Registry
-        </button>
-
-        <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-700">
-          <p className="text-slate-500 text-[10px] uppercase font-bold mb-2">Active Mine</p>
-          <select 
-            className="w-full bg-transparent text-sm font-bold text-green-400 outline-none cursor-pointer"
-            onChange={(e) => setSelectedMineId(e.target.value)}
-            value={selectedMineId || ""}
+    <div className="flex h-screen bg-[#F8FAFC] text-slate-900 font-sans">
+      <div className="flex h-screen bg-[#F8FAFC] text-slate-900 overflow-hidden">
+      {/* SIDEBAR - Clean White/Emerald */}
+      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col p-8">
+        <nav className="flex flex-col gap-2">
+          <button 
+            onClick={() => setActiveTab('dashboard')} 
+            className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'dashboard' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            {mines.map(mine => (
-              <option key={mine.id} value={mine.id} className="bg-slate-800">{mine.name}</option>
-            ))}
-          </select>
-        </div>
-      </nav>
+            <LayoutDashboard size={20} /> Dashboard
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('emissions')} 
+            className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'emissions' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Factory size={20} /> Emission Logs
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('sinks')} 
+            className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'sinks' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Leaf size={20} /> Afforestation
+          </button>
+        </nav>
+      </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        {/* HEADER SECTION */}
-        <header className="flex justify-between items-end mb-8">
-          <div>
-            <h1 className="text-4xl font-black mb-1">Operational Dashboard</h1>
-            <p className="text-slate-400 text-sm flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-              Live Compliance Monitoring: Sector-7 Coalfields
-            </p>
+      {/* DYNAMIC CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto p-10">
+        {/* {activeTab === 'dashboard' && <EnhancedOverview gap={gap} neutrality={neutralityPercent} totalS={totalS} logs={logs} sinks={sinks} />}
+        {activeTab === 'emissions' && <EmissionLoggerModule mineId={selectedMineId} logs={logs} />} */}
+        {activeTab === 'sinks' && <AfforestationRegistry mineId={selectedMineId} sinks={sinks} />}
+      </main>
+</div>
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto">
+        
+        {/* TOP NAVBAR */}
+        <header className="h-20 bg-white border-b border-slate-200 px-10 flex items-center justify-between sticky top-0 z-10">
+          <div className="relative w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input type="text" placeholder="Search mine reports..." className="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 pl-10 pr-4 outline-none focus:border-emerald-500 transition text-sm" />
           </div>
-          <div className={`px-6 py-3 rounded-2xl border flex items-center gap-4 ${gap > 0 ? 'bg-red-500/5 border-red-500/20' : 'bg-green-500/5 border-green-500/20'}`}>
-             <div className="text-right">
-                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-widest">Net Neutrality Gap</p>
-                <p className={`text-2xl font-black ${gap > 0 ? 'text-red-500' : 'text-green-500'}`}>{gap} <span className="text-xs">Tons</span></p>
-             </div>
-             <AlertCircle className={gap > 0 ? 'text-red-500' : 'text-green-500'} size={28} />
+          <div className="flex items-center gap-6">
+            <div className="relative"><Bell className="text-slate-500 cursor-pointer" size={20} /> <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span></div>
+            <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
+              <div className="text-right">
+                <p className="text-xs font-bold text-slate-800 uppercase">Krishna V.</p>
+                <p className="text-[10px] text-slate-500 font-medium">Mine Superintendent</p>
+              </div>
+              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 border border-slate-200">
+                <User size={20} />
+              </div>
+            </div>
           </div>
         </header>
 
-        {/* TOP STATS CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700 hover:border-slate-500 transition-colors">
-            <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-3">Gross Footprint</p>
-            <h2 className="text-4xl font-black text-white">{totalCO2Display} <span className="text-sm font-medium text-slate-500">Tons CO2-e</span></h2>
-          </div>
+        <div className="p-10 max-w-7xl mx-auto">
           
-          <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700 hover:border-slate-500 transition-colors">
-            <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-3">Grid Reliance</p>
-            <h2 className="text-4xl font-black text-white">{totalElec.toLocaleString()} <span className="text-sm font-medium text-slate-500">kWh</span></h2>
+          {/* WELCOME SECTION */}
+          <div className="mb-10 flex justify-between items-end">
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Executive Overview</h1>
+              <p className="text-slate-500 font-medium mt-1">Status Report: CCTS Compliance Framework 2026</p>
+            </div>
+            <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-emerald-100 transition flex items-center gap-2">
+              Generate Audit Report <ArrowUpRight size={18} />
+            </button>
           </div>
 
-          <div className="bg-gradient-to-br from-emerald-600/10 to-emerald-900/5 p-6 rounded-3xl border border-emerald-500/20">
-            <p className="text-emerald-500 text-[10px] uppercase font-bold tracking-widest mb-3">Current Offsets</p>
-            <h2 className="text-4xl font-black text-white">{totalS.toFixed(2)} <span className="text-sm font-medium text-emerald-700">Tons</span></h2>
+          {/* KPI CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Total Carbon Gap</p>
+              <h2 className="text-3xl font-black text-slate-800">{gap} <span className="text-xs font-medium text-slate-400">Tons</span></h2>
+              <div className="mt-3 flex items-center gap-2 text-[11px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full w-fit">
+                <ArrowUpRight size={12} /> 4.2% from last month
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Neutrality Target</p>
+              <h2 className="text-3xl font-black text-emerald-600">{neutralityPercent}% <span className="text-xs font-medium text-slate-400">Achieved</span></h2>
+              <div className="mt-4 w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500" style={{ width: `${neutralityPercent}%` }}></div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-[1.5rem] border border-slate-200 shadow-sm">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Greenbelt Coverage</p>
+              <h2 className="text-3xl font-black text-slate-800">{totalS.toFixed(1)} <span className="text-xs font-medium text-slate-400">Tons/yr</span></h2>
+              <div className="mt-3 flex items-center gap-2 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full w-fit">
+                <Target size={12} /> 120 Trees planted this week
+              </div>
+            </div>
+
+            <div className="bg-emerald-900 p-6 rounded-[1.5rem] shadow-xl relative overflow-hidden">
+              <div className="relative z-10">
+                <p className="text-emerald-300/80 text-xs font-bold uppercase tracking-wider mb-2">Compliance Score</p>
+                <h2 className="text-4xl font-black text-white">A+</h2>
+                <p className="text-emerald-200 text-[11px] mt-4 font-medium italic underline cursor-pointer">View regulatory certificate</p>
+              </div>
+              <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-emerald-800 rounded-full blur-3xl opacity-50"></div>
+            </div>
           </div>
-        </div>
 
-        {/* WORKSPACE AREA */}
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-  
-  {/* LEFT COLUMN: Input Forms or Strategy Tools */}
-  <div className="lg:col-span-5 space-y-6">
-    {activeTab === 'emissions' && (
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <EmissionForm mineId={selectedMineId} />
-      </div>
-    )}
-    
-    {activeTab === 'sinks' && (
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <SinkForm mineId={selectedMineId} />
-      </div>
-    )}
-    
-    {activeTab === 'dashboard' && (
-      <div className="space-y-6 animate-in fade-in duration-700">
-        {/* Pillar 3: Mitigation Simulator */}
-        <MitigationSimulator currentEmissions={parseFloat(totalCO2Display)} />
-        
-        {/* Pillar 5: Afforestation Estimator */}
-        <AfforestationEstimator gap={parseFloat(gap)} />
-      </div>
-    )}
-  </div>
+          {/* MAIN DATA SECTION */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8 space-y-8">
+              <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-center mb-8 px-2">
+                  <h3 className="font-bold text-slate-800">Emission Analysis vs Sinks</h3>
+                  <div className="flex gap-4">
+                    <span className="flex items-center gap-2 text-xs text-slate-400 font-medium"><div className="w-3 h-3 bg-red-500 rounded-full"></div> Gross Impact</span>
+                    <span className="flex items-center gap-2 text-xs text-slate-400 font-medium"><div className="w-3 h-3 bg-emerald-500 rounded-full"></div> Offset Sink</span>
+                  </div>
+                </div>
+                <GapChart logs={safeLogs} sinks={safeSinks} />
+              </div>
+              
+              <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                <TrendChart logs={safeLogs} />
+              </div>
+            </div>
 
-  {/* RIGHT COLUMN: Visual Analytics */}
-  <div className="lg:col-span-7 space-y-6">
-    <div className="bg-slate-800 p-4 rounded-[2rem] border border-slate-700 shadow-2xl">
-       <GapChart logs={logs} sinks={sinks} />
-    </div>
-    
-    {/* Pillar 6: Trend Analysis */}
-    <div className="bg-slate-800 p-6 rounded-[2rem] border border-slate-700 shadow-2xl">
-       <TrendChart logs={logs} />
-    </div>
-  </div>
-</div>
-
-          {/* Chart Side
-          <div className="lg:col-span-7">
-             <div className="bg-slate-800 p-2 rounded-[2rem] border border-slate-700 shadow-2xl">
-                <GapChart logs={logs} sinks={sinks} /> 
-                <TrendChart logs={logs} /> 
-             </div>
-          </div>
-        </div> */}
-
-        {/* DATA TABLE (FOOTER) */}
-        <div className="mt-10 bg-slate-800 rounded-3xl border border-slate-700 overflow-hidden shadow-2xl">
-          <div className="px-8 py-5 border-b border-slate-700 flex justify-between items-center">
-            <h3 className="font-black uppercase tracking-tighter text-slate-300 text-lg">Historical Audit Logs</h3>
-            <span className="px-3 py-1 bg-slate-900 rounded-full text-[10px] font-bold text-slate-500">LATEST 10 ENTRIES</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-900/50 text-slate-500">
-                <tr>
-                  <th className="px-8 py-4 font-bold">TIMESTAMP</th>
-                  <th className="px-8 py-4 font-bold">DIESEL (L)</th>
-                  <th className="px-8 py-4 font-bold">GRID (kWh)</th>
-                  <th className="px-8 py-4 font-bold text-red-500/70">EMISSION IMPACT</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-700/50">
-                {logs && logs.length > 0 ? logs.slice(0, 20).map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-700/20 transition-colors">
-                    <td className="px-8 py-4 font-mono text-xs text-slate-400">{log.recorded_at}</td>
-                    <td className="px-8 py-4 font-bold">{log.diesel_liters}</td>
-                    <td className="px-8 py-4 font-bold">{log.electricity_kwh}</td>
-                    <td className="px-8 py-4">
-                      <div className="flex items-center gap-2">
-                         <div className="h-1.5 w-12 bg-slate-700 rounded-full overflow-hidden">
-                            <div className="h-full bg-red-500" style={{width: '60%'}}></div>
-                         </div>
-                         <span className="text-red-400 font-black">
-                            {((log.diesel_liters * 2.68 + log.electricity_kwh * 0.82) / 1000).toFixed(2)} t
-                         </span>
+            <div className="lg:col-span-4 space-y-8">
+              {/* RECENT ACTIVITY SIDEBAR WIDGET */}
+              <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                  <h3 className="font-bold text-slate-800 text-sm">Real-time Telemetry</h3>
+                  <span className="text-[10px] bg-slate-100 px-2 py-1 rounded-md text-slate-500 font-black">LIVE</span>
+                </div>
+                <div className="p-2 divide-y divide-slate-50">
+                  {safeLogs.slice(0, 5).map((log, i) => (
+                    <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:shadow-md transition">
+                          <Zap size={18} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">{log.recorded_at}</p>
+                          <p className="text-[10px] text-slate-400 uppercase tracking-tighter">Energy Injection</p>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="4" className="p-20 text-center text-slate-600 italic">No operational telemetry found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                      <p className="text-xs font-black text-red-500">+{((log.diesel_liters * 2.68) / 1000).toFixed(1)}t</p>
+                    </div>
+                  ))}
+                </div>
+                <button className="w-full p-4 text-[11px] font-bold text-emerald-600 hover:bg-emerald-50 transition border-t border-slate-100">
+                  View full telemetry history
+                </button>
+              </div>
+
+              {/* QUICK CALCULATOR MINI-WIDGET */}
+              <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-[2rem] text-white shadow-xl shadow-slate-200">
+                <Target className="text-emerald-400 mb-4" />
+                <h4 className="font-bold mb-2">Neutrality Gap Advice</h4>
+                <p className="text-slate-400 text-xs leading-relaxed mb-6">Based on current telemetry, planting 400 additional Neem trees this quarter would reduce the neutrality gap by 12%.</p>
+                <button className="w-full bg-emerald-500 hover:bg-emerald-400 py-3 rounded-xl font-bold text-slate-900 transition">
+                  Simulate Strategy
+                </button>
+              </div>
+            </div>
           </div>
+
         </div>
       </main>
     </div>

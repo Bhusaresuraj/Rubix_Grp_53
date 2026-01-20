@@ -10,12 +10,24 @@ const page = () => {
   const router = useRouter()
   const supabase = createClient()
 
-  const handleSignIn = async (e) => {
-    e.preventDefault()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) alert(error.message)
-    else router.push('/dashboard')
+const handleSignIn = async (e) => {
+  e.preventDefault();
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    alert(error.message);
+  } else {
+    // 1. Extract the role from the user metadata
+    const userRole = data.user.user_metadata?.role;
+
+    // 2. Redirect based on role
+    if (userRole === 'government') {
+      router.push('/gov-dashboard');
+    } else {
+      router.push('/dashboard');
+    }
   }
+};
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
