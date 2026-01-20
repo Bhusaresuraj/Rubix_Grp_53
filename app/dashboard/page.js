@@ -13,14 +13,15 @@ import {
 } from 'lucide-react';
 
 const page = () => {
-  const { logs, sinks, loading } = useCoal();
-  
+const { logs, sinks, plans, loading } = useCoal();
+
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'emissions', 'sinks'
   const [selectedMineId, setSelectedMineId] = useState(null);
   // Safe math for professional display
   const safeLogs = logs || [];
   const safeSinks = sinks || [];
-  
+  const safePlans = plans || [];
+  console.log("daya is",safePlans)
   const totalE = safeLogs.reduce((acc, curr) => acc + ((curr.diesel_liters * 2.68 + curr.electricity_kwh * 0.82) / 1000), 0);
   const totalS = safeSinks.reduce((acc, curr) => acc + ((curr.neem_count * 25 + curr.bamboo_count * 18.2) / 1000), 0);
   const gap = (totalE - totalS).toFixed(2);
@@ -70,7 +71,13 @@ const page = () => {
       <main className="flex-1 overflow-y-auto p-10">
         {/* {activeTab === 'dashboard' && <EnhancedOverview gap={gap} neutrality={neutralityPercent} totalS={totalS} logs={logs} sinks={sinks} />}
         {activeTab === 'emissions' && <EmissionLoggerModule mineId={selectedMineId} logs={logs} />} */}
-        {activeTab === 'sinks' && <AfforestationRegistry mineId={selectedMineId} sinks={sinks} />}
+      {activeTab === 'sinks' && (
+    <AfforestationRegistry 
+      mineId={selectedMineId} 
+      sinks={sinks} 
+      plans={safePlans}
+    />
+  )}
       </main>
 </div>
       {/* MAIN CONTENT AREA */}

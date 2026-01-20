@@ -16,17 +16,17 @@ export default function AfforestationEstimator({ gap }) {
   const landRequired = (treesRequired / 400).toFixed(2);
 
   return (
-    <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700">
+    <div className="bg-slate-100 p-6 rounded-3xl border border-slate-700">
       <h3 className="text-emerald-400 font-bold uppercase text-xs tracking-widest mb-4">Neutrality Requirement</h3>
       <div className="space-y-4">
-        <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl">
+        <div className="flex items-center gap-4 bg-slate-200 p-4 rounded-2xl">
           <TreePine className="text-emerald-500" />
           <div>
             <p className="text-2xl font-black">{treesRequired.toLocaleString()}</p>
             <p className="text-slate-500 text-xs">Neem Trees Required</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 bg-slate-900/50 p-4 rounded-2xl">
+        <div className="flex items-center gap-4 bg-slate-200 p-4 rounded-2xl">
           <Landmark className="text-blue-500" />
           <div>
             <p className="text-2xl font-black">{landRequired}</p>

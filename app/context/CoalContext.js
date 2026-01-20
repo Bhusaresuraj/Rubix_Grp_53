@@ -6,28 +6,40 @@ const CoalContext = createContext();
 
 export const CoalProvider = ({ children }) => {
   const [logs, setLogs] = useState([]);
+  const [sinks, setSinks] = useState([]); // Initialized as empty array
+  const [plans, setPlans] = useState([]); // Initialized as empty array
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
-const [sinks, setSinks] = useState()
-  // Fetch data once when the app loads
-  // const fetchData = async () => {
-  //   const { data, error } = await supabase
-  //     .from("emission_logs")
-  //     .select("*")
-  //     .order("recorded_at", { ascending: false });
-    
-  //   if (!error) setLogs(data);
-  //   setLoading(false);
-  // };
 
+  // Optimized fetch to get all data in one function
   const fetchData = async () => {
-  const { data: emissionData } = await supabase.from("emission_logs").select("*");
-  const { data: sinkData } = await supabase.from("sinks").select("*");
-  
-  setLogs(emissionData || []);
-  setSinks(sinkData || []); // Add a [sinks, setSinks] state to your context
-  setLoading(false);
-};
+    setLoading(true);
+    try {
+      // Fetching all three tables
+      const { data: emissionData } = await supabase
+        .from("emission_logs")
+        .select("*")
+        .order("recorded_at", { ascending: false });
+
+      const { data: sinkData } = await supabase
+        .from("sinks")
+        .select("*")
+        .order("recorded_at", { ascending: false });
+
+      const { data: planData } = await supabase
+        .from("afforestation_plans")
+        .select("*")
+        .order("target_year", { ascending: true });
+
+      setLogs(emissionData || []);
+      setSinks(sinkData || []);
+      setPlans(planData || []);
+    } catch (error) {
+      console.error("Error fetching coal data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Add a new log
   const addLog = async (newLog) => {
@@ -41,7 +53,6 @@ const [sinks, setSinks] = useState()
       return { error };
     }
 
-    // Optimistically update state or append new data
     if (data) setLogs((prev) => [data[0], ...prev]);
     return { data };
   };
@@ -83,13 +94,23 @@ const [sinks, setSinks] = useState()
   }, []);
 
   return (
-    <CoalContext.Provider value={{ logs, loading, fetchData, addLog, updateLog, deleteLog }}>
+    <CoalContext.Provider 
+      value={{ 
+        logs, 
+        sinks, 
+        plans, 
+        loading, 
+        fetchData, 
+        addLog, 
+        updateLog, 
+        deleteLog 
+      }}
+    >
       {children}
     </CoalContext.Provider>
   );
 };
 
-// At the bottom of app/context/CoalContext.js
 export const useCoal = () => {
   const context = useContext(CoalContext);
   if (context === undefined) {
@@ -97,4 +118,3 @@ export const useCoal = () => {
   }
   return context;
 };
-// export const useCoal = () => useContext(CoalContext);
