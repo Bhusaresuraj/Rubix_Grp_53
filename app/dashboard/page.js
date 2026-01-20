@@ -7,10 +7,11 @@ import AfforestationEstimator from "../Components/AfforestationEstimator";
 import EmissionForm from "../Components/EmissionForm";
 import MitigationSimulator from "../Components/MitigationSimulator";
 import AfforestationRegistry from "../Components/AfforestationRegistry";
+import CostBenefitAnalysis from "./CostBenefitAnalysis";
 import { 
   LayoutDashboard, Factory, Leaf, 
   ArrowUpRight, Target, ShieldCheck, 
-  Search, Bell, User,Zap 
+  Search, Bell, User,Zap, Calculator
 } from 'lucide-react';
 
 const page = () => {
@@ -41,7 +42,7 @@ const { logs, sinks, plans, loading } = useCoal();
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-900 font-sans">
-      <div className="flex h-screen bg-[#F8FAFC] text-slate-900 overflow-hidden">
+      <div className={`flex h-screen bg-[#F8FAFC] text-slate-900 overflow-hidden ${activeTab !== 'dashboard' ? 'flex-1' : ''}`}>
       {/* SIDEBAR - Clean White/Emerald */}
       <aside className="w-72 bg-white border-r border-slate-200 flex flex-col p-8">
         <nav className="flex flex-col gap-2">
@@ -65,12 +66,22 @@ const { logs, sinks, plans, loading } = useCoal();
           >
             <Leaf size={20} /> Afforestation
           </button>
+<<<<<<< HEAD
           <button 
   onClick={() => setActiveTab('simulator')} 
   className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'simulator' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
 >
   <Zap size={20} /> Mitigation Lab
 </button>
+=======
+
+          <button 
+            onClick={() => setActiveTab('cost-benefit')} 
+            className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'cost-benefit' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Calculator size={20} /> Cost-Benefit
+          </button>
+>>>>>>> 3ae43a3 (Gov dash and admin dash)
         </nav>
       </aside>
 
@@ -103,11 +114,16 @@ const { logs, sinks, plans, loading } = useCoal();
       plans={safePlans}
     />
   )}
+<<<<<<< HEAD
 
   {activeTab === 'simulator' && <MitigationSimulator logs={logs} sinks={sinks} />}
+=======
+      {activeTab === 'cost-benefit' && <CostBenefitAnalysis />}
+>>>>>>> 3ae43a3 (Gov dash and admin dash)
       </main>
 </div>
       {/* MAIN CONTENT AREA */}
+      {activeTab === 'dashboard' && (
       <main className="flex-1 overflow-y-auto">
         
         {/* TOP NAVBAR */}
@@ -240,6 +256,7 @@ const { logs, sinks, plans, loading } = useCoal();
 
         </div>
       </main>
+      )}
     </div>
   );
 };

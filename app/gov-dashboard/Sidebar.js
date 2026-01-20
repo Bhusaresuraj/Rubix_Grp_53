@@ -11,6 +11,7 @@ import {
   TrendingUp,
   AlertTriangle,
   MapPinned,
+  Calculator,
 } from "lucide-react";
 
 export default function GovSidebar() {
@@ -48,6 +49,11 @@ export default function GovSidebar() {
     label: "Geographical View",
     icon: MapPinned,
     path: "/gov-dashboard?view=map",
+  },
+  {
+    label: "Cost-Benefit Analysis",
+    icon: Calculator,
+    path: "/gov-dashboard?view=cost-benefit",
   },
 ];
 

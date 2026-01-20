@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Sidebar from "./Sidebar";
 import OrganizationAnalysis from "./OrganizationAnalysis";
 import PlantationHistory from "./PlantationHistory";
+import CostBenefitAnalysis from "./CostBenefitAnalysis";
 import { createClient } from "@/utils/supabase/client";
 import { ShieldCheck, AlertTriangle, Search, FileText, MapPinned, ExternalLink } from "lucide-react";
 import { jsPDF } from "jspdf";
@@ -234,6 +235,7 @@ Work Status: ${workStatus}`;
            ========================= */}
         {view === "OrganizationAnalysis" && <OrganizationAnalysis />}
         {view === "plantation" && <PlantationHistory />}
+        {view === "cost-benefit" && <CostBenefitAnalysis />}
 
 
         {/* PLACEHOLDERS (next steps) */}
