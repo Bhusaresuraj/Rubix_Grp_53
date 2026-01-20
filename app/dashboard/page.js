@@ -1,6 +1,9 @@
 "use client";
 import React from "react";
 import { useCoal } from "../context/CoalContext";
+import EmissionForm from "../Components/EmissionForm";
+import { createClient } from "@/utils/supabase/client";
+import { useState,useEffect } from 'react';
 
 const page = () => {
   // 1. Get data from Context
@@ -10,8 +13,27 @@ const page = () => {
   // India 2026 Emission Factors: Diesel (2.68), Electricity (0.82)
   const totalDiesel = (logs || []).reduce((acc, curr) => acc + (curr.diesel_liters || 0), 0);
   const totalElec = (logs || []).reduce((acc, curr) => acc + (curr.electricity_kwh || 0), 0);
-  
+ 
   const totalCO2 = ((totalDiesel * 2.68) + (totalElec * 0.82)).toFixed(2);
+
+
+  const [mines, setMines] = useState([]);
+  const [selectedMineId, setSelectedMineId] = useState(null);
+  const supabase = createClient();
+
+  // Fetch the list of mines so we can pick one to log data
+  useEffect(() => {
+    async function getMines() {
+      const { data } = await supabase.from('mines').select('id, name');
+      if (data) {
+        setMines(data);
+        if (data.length > 0) setSelectedMineId(data[0].id); // Default to first mine
+      }
+    }
+    getMines();
+  }, []);
+
+  if (loading) return <div className="text-white p-10">Loading Dashboard...</div>;
 
   if (loading) {
     return (
@@ -20,6 +42,8 @@ const page = () => {
       </div>
     );
   }
+
+
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-8">
@@ -81,6 +105,70 @@ const page = () => {
             )}
           </tbody>
         </table>
+      </div>
+      <div className="flex flex-col md:flex-row gap-8">
+        
+        {/* LEFT COLUMN: Input Form */}
+        <div className="w-full md:w-1/3">
+          <div className="mb-6">
+            <label className="text-slate-400 text-sm mb-2 block">Select Active Mine</label>
+            <select 
+              className="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl outline-none focus:border-green-500"
+              onChange={(e) => setSelectedMineId(e.target.value)}
+              value={selectedMineId || ""}
+            >
+              {mines.map(mine => (
+                <option key={mine.id} value={mine.id}>{mine.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {selectedMineId && <EmissionForm mineId={selectedMineId} />}
+        </div>
+
+        {/* RIGHT COLUMN: Real-time Stats & Logs */}
+        <div className="w-full md:w-2/3">
+          <h2 className="text-2xl font-bold mb-6 text-green-400">Live Analytics</h2>
+          
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+              <p className="text-slate-400 text-xs uppercase mb-1">Total Logs</p>
+              <h3 className="text-3xl font-black">{logs?.length || 0}</h3>
+            </div>
+            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+              <p className="text-slate-400 text-xs uppercase mb-1">Recent Activity</p>
+              <h3 className="text-sm font-mono text-green-400">
+                {logs?.[0]?.recorded_at || "No data yet"}
+              </h3>
+            </div>
+          </div>
+
+          {/* Minimalist Log Table */}
+          <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-900/50 text-slate-400">
+                <tr>
+                  <th className="p-4">Date</th>
+                  <th className="p-4">Diesel (L)</th>
+                  <th className="p-4">CO2 (tons)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700">
+                {logs?.slice(0, 5).map(log => (
+                  <tr key={log.id}>
+                    <td className="p-4">{log.recorded_at}</td>
+                    <td className="p-4">{log.diesel_liters}</td>
+                    <td className="p-4 text-red-400 font-bold">
+                      {((log.diesel_liters * 2.68) / 1000).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </div>
   );

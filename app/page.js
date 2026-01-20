@@ -1,7 +1,8 @@
 import Hero from "./Components/Hero";
+import Map from "./Components/Map";
 export default function Home() {
   return (
-    <div><Hero/></div>
+    <div><Hero/><Map/></div>
   );
 }
 
