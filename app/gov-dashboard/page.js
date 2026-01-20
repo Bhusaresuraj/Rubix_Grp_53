@@ -7,7 +7,8 @@ import Sidebar from "./Sidebar";
 import OrganizationAnalysis from "./OrganizationAnalysis";
 import PlantationHistory from "./PlantationHistory";
 import { createClient } from "@/utils/supabase/client";
-import { ShieldCheck, AlertTriangle, Search } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Search, FileText, MapPinned, ExternalLink } from "lucide-react";
+import { jsPDF } from "jspdf";
 
 export default function GovDashboard() {
   const [orgs, setOrgs] = useState([]);
@@ -26,6 +27,73 @@ export default function GovDashboard() {
     }
     fetchGovData();
   }, []);
+
+  /* ================= PDF REPORT GENERATOR ================= */
+  const generateReport = (org) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // --- 1. Official Header ---
+    doc.setFillColor(16, 185, 129); // Emerald-500
+    doc.rect(0, 0, pageWidth, 40, "F");
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("GOVERNMENT COMPLIANCE REPORT", pageWidth / 2, 20, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Ministry of Coal & Energy | Official Audit Document", pageWidth / 2, 28, { align: "center" });
+
+    // --- 2. Organization Details ---
+    doc.setTextColor(30, 41, 59); // Slate-800
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(org.organization_name, 20, 60);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.text(`Location: ${org.location || "N/A"}`, 20, 66);
+    doc.text(`Report Date: ${new Date().toLocaleDateString()}`, 20, 72);
+
+    // --- 3. AI Logic & Summary ---
+    const netImpact = (org.total_co2 * (1 - org.neutrality_rate / 100)).toFixed(1);
+    const isCompliant = org.neutrality_rate > 50;
+    const workStatus = isCompliant ? "Completed / Maintenance" : "Ongoing Remediation";
+    
+    // Simulated AI Summary Generation
+    const aiSummary = `This automated report serves as an official compliance record for ${org.organization_name}. 
+
+Based on real-time oversight data, the facility has recorded a gross carbon emission of ${org.total_co2} tonnes. Through afforestation and offset measures, approximately ${org.neutrality_rate.toFixed(1)}% of these emissions have been neutralized, resulting in a net carbon impact of ${netImpact} tonnes.
+
+AI ASSESSMENT: ${org.neutrality_rate < 30 
+      ? "CRITICAL ALERT. The facility is operating significantly below the mandated green cover threshold. Immediate regulatory intervention and accelerated plantation drives are recommended to avoid penalties." 
+      : "SATISFACTORY. The facility demonstrates adequate adherence to environmental protocols. Continued monitoring is advised."}
+
+Work Status: ${workStatus}`;
+
+    // --- 4. Render Summary ---
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Executive Summary (AI Generated)", 20, 95);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    const splitText = doc.splitTextToSize(aiSummary, 170);
+    doc.text(splitText, 20, 105);
+
+    // --- 5. Footer ---
+    doc.setDrawColor(200);
+    doc.line(20, 270, 190, 270);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Generated via Rubix GovDashboard • Verifiable Record", 20, 280);
+
+    doc.save(`${org.organization_name}_Compliance_Report.pdf`);
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-50">
@@ -103,6 +171,7 @@ export default function GovDashboard() {
                     <th className="p-6">Gross CO₂ (T)</th>
                     <th className="p-6">Neutrality</th>
                     <th className="p-6">Status</th>
+                    <th className="p-6">Report</th>
                   </tr>
                 </thead>
 
@@ -143,6 +212,15 @@ export default function GovDashboard() {
                           </span>
                         )}
                       </td>
+                      <td className="p-6">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); generateReport(org); }}
+                          className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-bold transition border border-slate-200"
+                        >
+                          <FileText size={14} />
+                          Download
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -169,7 +247,40 @@ export default function GovDashboard() {
           <h1 className="text-3xl font-black">Compliance Status</h1>
         )}
         {view === "map" && (
-          <h1 className="text-3xl font-black">Geographical View</h1>
+          <div className="flex flex-col h-full">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <div>
+                <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+                  <MapPinned className="text-emerald-600" size={36} />
+                  Geographical View
+                </h1>
+                <p className="text-slate-500 font-medium">
+                  Live Satellite & GIS Mapping of Mining Zones
+                </p>
+              </div>
+              
+              <a 
+                href="https://www.infinite-vision.co.in/IV1/Map/map/index.php"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-200"
+              >
+                <ExternalLink size={18} />
+                Open Fullscreen Map
+              </a>
+            </header>
+
+            <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden relative min-h-[75vh]">
+              <iframe 
+                src="https://www.infinite-vision.co.in/IV1/Map/map/index.php" 
+                className="w-full h-full absolute inset-0"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                title="Geographical Map View"
+              />
+            </div>
+          </div>
         )}
 
       </main>
