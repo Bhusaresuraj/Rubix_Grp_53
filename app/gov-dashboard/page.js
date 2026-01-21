@@ -8,6 +8,7 @@ import OrganizationAnalysis from "./OrganizationAnalysis";
 import PlantationHistory from "./PlantationHistory";
 import CostBenefitAnalysis from "./CostBenefitAnalysis";
 import ComplianceCalendar from "./ComplianceCalendar";
+import ExtractedResources from "./ExtractedResources";
 import { createClient } from "@/utils/supabase/client";
 import { ShieldCheck, AlertTriangle, Search, FileText, MapPinned, ExternalLink } from "lucide-react";
 import { jsPDF } from "jspdf";
@@ -238,6 +239,7 @@ Work Status: ${workStatus}`;
         {view === "plantation" && <PlantationHistory />}
         {view === "cost-benefit" && <CostBenefitAnalysis />}
         {view === "compliance-calendar" && <ComplianceCalendar />}
+        {view === "extracted-resources" && <ExtractedResources />}
 
         {/* PLACEHOLDERS (next steps) */}
         {view === "plantation" && (

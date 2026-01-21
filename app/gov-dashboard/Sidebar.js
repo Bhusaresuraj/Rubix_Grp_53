@@ -11,6 +11,7 @@ import {
   MapPinned,
   Calculator,
   CalendarCheck,
+  Pickaxe,
 } from "lucide-react";
 
 export default function GovSidebar() {
@@ -68,6 +69,12 @@ export default function GovSidebar() {
       icon: CalendarCheck,
       path: "/gov-dashboard?view=compliance-calendar",
       view: "compliance-calendar",
+    },
+    {
+      label: "Extracted Resources",
+      icon: Pickaxe,
+      path: "/gov-dashboard?view=extracted-resources",
+      view: "extracted-resources",
     },
   ];
 
