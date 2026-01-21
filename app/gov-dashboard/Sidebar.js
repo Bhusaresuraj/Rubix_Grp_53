@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   MapPinned,
   Calculator,
+  CalendarCheck,
 } from "lucide-react";
 
 export default function GovSidebar() {
@@ -39,6 +40,7 @@ export default function GovSidebar() {
       view: "plantation",
     },
   
+<<<<<<< HEAD
     {
       label: "Geographical View",
       icon: MapPinned,
@@ -52,6 +54,45 @@ export default function GovSidebar() {
       view: "cost-benefit",
     },
   ];
+=======
+  {
+    label: "Organization Analysis",
+    icon: Building2,
+    path: "/gov-dashboard?view=OrganizationAnalysis",
+  },
+  {
+    label: "Plantation History",
+    icon: Trees,
+    path: "/gov-dashboard?view=plantation",
+  },
+  {
+    label: "Emission Trends",
+    icon: TrendingUp,
+    path: "/gov-dashboard?view=emissions",
+  },
+  {
+    label: "Compliance Status",
+    icon: AlertTriangle,
+    path: "/gov-dashboard?view=compliance",
+  },
+  {
+    label: "Geographical View",
+    icon: MapPinned,
+    path: "/gov-dashboard?view=map",
+  },
+  {
+    label: "Cost-Benefit Analysis",
+    icon: Calculator,
+    path: "/gov-dashboard?view=cost-benefit",
+  },
+  {
+    label: "Compliance Calendar",
+    icon: CalendarCheck,
+    path: "/gov-dashboard?view=compliance-calendar",
+  },
+];
+
+>>>>>>> 92d1135 (Gov dash and admin dash1)
 
   return (
     <aside className="w-[280px] min-h-screen bg-slate-800 text-white flex flex-col px-6 py-8">
