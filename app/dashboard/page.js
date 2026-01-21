@@ -8,6 +8,8 @@ import EmissionForm from "../Components/EmissionForm";
 import MitigationSimulator from "../Components/MitigationSimulator";
 import AfforestationRegistry from "../Components/AfforestationRegistry";
 import CostBenefitAnalysis from "./CostBenefitAnalysis";
+import GapAnalysis from "../Components/GapAnalysis";
+
 import { 
   LayoutDashboard, Factory, Leaf, 
   ArrowUpRight, Target, ShieldCheck, 
@@ -66,6 +68,12 @@ const { logs, sinks, plans, loading } = useCoal();
           >
             <Leaf size={20} /> Afforestation
           </button>
+            <button 
+            onClick={() => setActiveTab('gap')} 
+            className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'gap' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Leaf size={20} /> Gap Scorecard
+          </button>
 
           <button 
   onClick={() => setActiveTab('simulator')} 
@@ -105,18 +113,30 @@ const { logs, sinks, plans, loading } = useCoal();
       </div>
     </div>
   )}
-      {activeTab === 'sinks' && (
+      {/* {activeTab === 'sinks' && (
     <AfforestationRegistry 
       mineId={selectedMineId} 
       sinks={sinks} 
       plans={safePlans}
     />
-  )}
+  )} */}
+  {activeTab === 'sinks' && (
+  <div className="space-y-10 animate-in fade-in duration-700">
+    <AfforestationRegistry mineId={selectedMineId} sinks={sinks} plans={safePlans} />
+    
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Pillar 5: The Solution Provider */}
+      <AfforestationEstimator gap={gap} />
+      
+    
+    </div>
+  </div>
+)}
 
 
   {activeTab === 'simulator' && <MitigationSimulator logs={logs} sinks={sinks} />}
       {activeTab === 'cost-benefit' && <CostBenefitAnalysis />}
-
+{activeTab === 'gap' && <GapAnalysis />}
       </main>
 </div>
       {/* MAIN CONTENT AREA */}
