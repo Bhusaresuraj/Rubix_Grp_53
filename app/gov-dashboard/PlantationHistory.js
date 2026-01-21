@@ -195,7 +195,7 @@ export default function PlantationHistory() {
 
       {/* ===== EMPTY STATE ===== */}
       {!org && (
-        <div className="bg-slate-100 border border-dashed border-slate-300 rounded-xl p-10 text-center text-slate-500 font-semibold">
+        <div className="bg-slate-100 border border-dashed border-slate-300 rounded-xl p-10 text-center text-green-700 font-semibold">
           Select an organization to view plantation history
         </div>
       )}

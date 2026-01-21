@@ -11,6 +11,7 @@ import {
   Tooltip,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import { Factory, Leaf, Scale } from "lucide-react";
 
 ChartJS.register(
   CategoryScale,
@@ -22,30 +23,10 @@ ChartJS.register(
 
 /* ================= MOCK DATA (FALLBACK) ================= */
 const MOCK_DATA = [
-  {
-    year: 2021,
-    yearly_emission: 1200,
-    estimated_offset: 300,
-    status: "Inadequate",
-  },
-  {
-    year: 2022,
-    yearly_emission: 950,
-    estimated_offset: 600,
-    status: "Inadequate",
-  },
-  {
-    year: 2023,
-    yearly_emission: 700,
-    estimated_offset: 850,
-    status: "Adequate",
-  },
-  {
-    year: 2024,
-    yearly_emission: 500,
-    estimated_offset: 900,
-    status: "Adequate",
-  },
+  { year: 2021, yearly_emission: 1200, estimated_offset: 300, status: "Inadequate" },
+  { year: 2022, yearly_emission: 950, estimated_offset: 600, status: "Inadequate" },
+  { year: 2023, yearly_emission: 700, estimated_offset: 850, status: "Adequate" },
+  { year: 2024, yearly_emission: 500, estimated_offset: 900, status: "Adequate" },
 ];
 
 export default function OrganizationAnalysis() {
@@ -109,20 +90,10 @@ export default function OrganizationAnalysis() {
   }, [selectedOrg, selectedYear]);
 
   /* ---------------- METRICS ---------------- */
-  const totalEmission = rows.reduce(
-    (sum, r) => sum + r.yearly_emission,
-    0
-  );
-
-  const totalOffset = rows.reduce(
-    (sum, r) => sum + r.estimated_offset,
-    0
-  );
-
+  const totalEmission = rows.reduce((sum, r) => sum + r.yearly_emission, 0);
+  const totalOffset = rows.reduce((sum, r) => sum + r.estimated_offset, 0);
   const complianceRatio =
-    totalEmission === 0
-      ? 100
-      : Math.min((totalOffset / totalEmission) * 100, 100);
+    totalEmission === 0 ? 100 : Math.min((totalOffset / totalEmission) * 100, 100);
 
   /* ---------------- CHART ---------------- */
   const chartData = {
@@ -171,8 +142,53 @@ export default function OrganizationAnalysis() {
         </select>
       </div>
 
+      {/* ===== EMPTY STATE (ONLY WHEN NO ORG SELECTED) ===== */}
+      {!selectedOrg && (
+        <div className="flex justify-center pt-20">
+          <div className="group relative max-w-xl text-center">
+
+            <div className="absolute -inset-[1.5px] rounded-3xl bg-gradient-to-r from-emerald-400 via-green-500 to-emerald-400 opacity-0 group-hover:opacity-100 blur transition duration-500"></div>
+
+            <div className="relative bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl p-10 shadow-lg transition duration-500 group-hover:shadow-2xl">
+
+              <div className="flex items-center justify-center gap-6 mb-6">
+                <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center transition group-hover:scale-110">
+                  <Factory className="text-slate-600" />
+                </div>
+                <span className="text-slate-400 text-xl">→</span>
+                <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center transition group-hover:scale-110">
+                  <Leaf className="text-emerald-600" />
+                </div>
+                <span className="text-slate-400 text-xl">→</span>
+                <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center transition group-hover:scale-110">
+                  <Scale className="text-white" />
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-black text-slate-800 mb-3">
+                Organization Intelligence Hub
+              </h2>
+
+              <p className="text-slate-500 leading-relaxed">
+                Select an organization to analyze emissions, plantation impact,
+                and carbon neutrality performance across years.
+              </p>
+
+              <p className="mt-4 text-emerald-600 font-bold">
+                ↑ Select an organization to begin
+              </p>
+
+              <div className="mt-8 h-[2px] w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full w-1/3 bg-emerald-500 translate-x-[-100%] group-hover:translate-x-[300%] transition-transform duration-700"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ===== NOTICE ===== */}
-      {usingMock && (
+      {usingMock && selectedOrg && (
         <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded-xl text-sm font-semibold">
           Showing simulated data (regulatory view integration pending)
         </div>

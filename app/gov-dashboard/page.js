@@ -237,7 +237,6 @@ Work Status: ${workStatus}`;
         {view === "plantation" && <PlantationHistory />}
         {view === "cost-benefit" && <CostBenefitAnalysis />}
 
-
         {/* PLACEHOLDERS (next steps) */}
         {view === "plantation" && (
           <h1 className="text-3xl font-black">Plantation History</h1>
