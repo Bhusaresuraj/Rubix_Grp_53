@@ -5,15 +5,18 @@ import GapChart from "../Components/GapChart";
 import TrendChart from "../Components/TrendChart";
 import AfforestationEstimator from "../Components/AfforestationEstimator";
 import EmissionForm from "../Components/EmissionForm";
-import MitigationSimulator from "../Components/MitigationSimulator";
 import AfforestationRegistry from "../Components/AfforestationRegistry";
 import CostBenefitAnalysis from "./CostBenefitAnalysis";
+
 import GapAnalysis from "../Components/GapAnalysis";
+
+
+import ComplianceCalendar from "./ComplianceCalendar";
 
 import { 
   LayoutDashboard, Factory, Leaf, 
   ArrowUpRight, Target, ShieldCheck, 
-  Search, Bell, User,Zap, Calculator
+  Search, Bell, User,Zap, Calculator, CalendarCheck
 } from 'lucide-react';
 
 const page = () => {
@@ -55,12 +58,12 @@ const { logs, sinks, plans, loading } = useCoal();
             <LayoutDashboard size={20} /> Dashboard
           </button>
           
-         <button 
-  onClick={() => setActiveTab('audit')} 
-  className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'audit' ? 'bg-red-50 text-red-700 font-bold border border-red-100' : 'text-slate-500 hover:bg-slate-50'}`}
->
-  <Factory size={20} /> Emission Audit
-</button>
+          <button 
+            onClick={() => setActiveTab('emissions')} 
+            className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'emissions' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <Factory size={20} /> Emission Logs
+          </button>
           
           <button 
             onClick={() => setActiveTab('sinks')} 
@@ -75,19 +78,29 @@ const { logs, sinks, plans, loading } = useCoal();
             <Leaf size={20} /> Gap Scorecard
           </button>
 
+
           <button 
   onClick={() => setActiveTab('simulator')} 
   className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'simulator' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
 >
   <Zap size={20} /> Mitigation Lab
 </button>
+
           <button 
             onClick={() => setActiveTab('cost-benefit')} 
             className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'cost-benefit' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
           >
             <Calculator size={20} /> Cost-Benefit
           </button>
- 
+
+
+          <button 
+            onClick={() => setActiveTab('compliance-calendar')} 
+            className={`flex items-center gap-4 p-3.5 rounded-xl transition ${activeTab === 'compliance-calendar' ? 'bg-emerald-50 text-emerald-700 font-bold border border-emerald-100' : 'text-slate-500 hover:bg-slate-50'}`}
+          >
+            <CalendarCheck size={20} /> Compliance
+          </button>
+
         </nav>
       </aside>
 
@@ -114,11 +127,13 @@ const { logs, sinks, plans, loading } = useCoal();
     </div>
   )}
       {/* {activeTab === 'sinks' && (
+      {activeTab === 'sinks' && (
     <AfforestationRegistry 
       mineId={selectedMineId} 
       sinks={sinks} 
       plans={safePlans}
     />
+<<<<<<< HEAD
   )} */}
   {activeTab === 'sinks' && (
   <div className="space-y-10 animate-in fade-in duration-700">
@@ -134,9 +149,19 @@ const { logs, sinks, plans, loading } = useCoal();
 )}
 
 
+
+
+
   {activeTab === 'simulator' && <MitigationSimulator logs={logs} sinks={sinks} />}
       {activeTab === 'cost-benefit' && <CostBenefitAnalysis />}
+
 {activeTab === 'gap' && <GapAnalysis />}
+
+
+
+      {activeTab === 'cost-benefit' && <CostBenefitAnalysis />}
+      {activeTab === 'compliance-calendar' && <ComplianceCalendar />}
+
       </main>
 </div>
       {/* MAIN CONTENT AREA */}

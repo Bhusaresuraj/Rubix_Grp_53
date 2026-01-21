@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   MapPinned,
   Calculator,
+  CalendarCheck,
 } from "lucide-react";
 
 export default function GovSidebar() {
@@ -17,7 +18,7 @@ export default function GovSidebar() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const currentView = searchParams.get("view"); // 👈 IMPORTANT
+  const currentView = searchParams.get("view");
 
   const menu = [
     {
@@ -38,7 +39,18 @@ export default function GovSidebar() {
       path: "/gov-dashboard?view=plantation",
       view: "plantation",
     },
-  
+    {
+      label: "Emission Trends",
+      icon: TrendingUp,
+      path: "/gov-dashboard?view=emissions",
+      view: "emissions",
+    },
+    {
+      label: "Compliance Status",
+      icon: AlertTriangle,
+      path: "/gov-dashboard?view=compliance",
+      view: "compliance",
+    },
     {
       label: "Geographical View",
       icon: MapPinned,
@@ -51,11 +63,16 @@ export default function GovSidebar() {
       path: "/gov-dashboard?view=cost-benefit",
       view: "cost-benefit",
     },
+    {
+      label: "Compliance Calendar",
+      icon: CalendarCheck,
+      path: "/gov-dashboard?view=compliance-calendar",
+      view: "compliance-calendar",
+    },
   ];
 
   return (
     <aside className="w-[280px] min-h-screen bg-slate-800 text-white flex flex-col px-6 py-8">
-
       {/* BRAND */}
       <div className="flex items-center gap-3 mb-10">
         <ShieldCheck className="text-emerald-400" size={32} />
